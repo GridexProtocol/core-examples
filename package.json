@@ -1,13 +1,10 @@
 {
   "name": "@gridexprotocol/core-examples",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "author": "Gridex",
   "description": "Example projects that demonstrate how to interact with the core smart contracts.",
   "license": "GPL-2.0-or-later",
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
-  "homepage": "https://www.gridex.org",
+  "homepage": "https://gdx.org",
   "keywords": [
     "gridex",
     "gridexswap",
@@ -17,7 +14,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/gridexprotocol/core-examples"
+    "url": "git@github.com:GridexProtocol/core-examples.git"
   },
   "files": [
     "contracts/**/*.sol",
