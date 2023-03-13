@@ -5,145 +5,99 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@gridexprotocol/core/contracts/interfaces/IGrid.sol";
 import "@gridexprotocol/core/contracts/interfaces/IGridFactory.sol";
-import "@gridexprotocol/core/contracts/interfaces/IWETHMinimum.sol";
-import "@gridexprotocol/core/contracts/interfaces/IGridParameters.sol";
-import "@gridexprotocol/core/contracts/interfaces/callback/IGridPlaceMakerOrderCallback.sol";
 import "@gridexprotocol/core/contracts/libraries/GridAddress.sol";
-import "@gridexprotocol/core/contracts/libraries/CallbackValidator.sol";
 import "@gridexprotocol/core/contracts/libraries/BoundaryMath.sol";
-import "./Multicall.sol";
+import "./interfaces/IMakerOrderManager.sol";
 
-contract ExampleMakerOrder is IGridPlaceMakerOrderCallback, Multicall {
-    /// @dev The address of IGridFactory
-    address public immutable gridFactory;
-    /// @dev The address of IWETHMinimum
-    address public immutable weth9;
+contract ExampleMakerOrder {
+    IMakerOrderManager public immutable makerOrderManager;
 
-    constructor(address _griFactory, address _weth9) {
-        gridFactory = _griFactory;
-        weth9 = _weth9;
+    address public constant WETH9 = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
+    address public constant USDC = 0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8;
+    int24 public constant RESOLUTION = 5;
+
+    constructor(IMakerOrderManager _makerOrderManager) {
+        makerOrderManager = _makerOrderManager;
     }
 
-    modifier checkDeadline(uint256 deadline) {
-        require(deadline >= block.timestamp, "EXPIRED");
-        _;
-    }
+    /// @notice place a maker order for WETH9
+    /// @param amount The amount of WETH9 to place a maker order
+    /// @return orderId The id of the maker order
+    function placeMakerOrderForWETH9(uint128 amount) external returns (uint256 orderId) {
+        // msg.sender MUST approve the contract to spend the input token
+        // transfer the specified amount of WETH9 to this contract
+        SafeERC20.safeTransferFrom(IERC20(WETH9), msg.sender, address(this), amount);
 
-    struct PlaceMakerOrderCalldata {
-        GridAddress.GridKey gridKey;
-        address payer;
-    }
+        // approve the maker order manager to spend WETH9
+        SafeERC20.safeApprove(IERC20(WETH9), address(makerOrderManager), amount);
 
-    /// @inheritdoc IGridPlaceMakerOrderCallback
-    function gridexPlaceMakerOrderCallback(uint256 amount0, uint256 amount1, bytes calldata data) external override {
-        PlaceMakerOrderCalldata memory decodeData = abi.decode(data, (PlaceMakerOrderCalldata));
-        CallbackValidator.validate(gridFactory, decodeData.gridKey);
-
-        if (amount0 > 0) pay(decodeData.gridKey.token0, decodeData.payer, msg.sender, amount0);
-
-        if (amount1 > 0) pay(decodeData.gridKey.token1, decodeData.payer, msg.sender, amount1);
-    }
-
-    struct PlaceOrderParameters {
-        uint256 deadline;
-        address recipient;
-        address tokenA;
-        address tokenB;
-        int24 resolution;
-        bool zero;
-        int24 boundaryLower;
-        uint128 amount;
-    }
-
-    /// @notice Places a maker order
-    /// @return orderId An order id representing the placed order
-    function placeMakerOrder(
-        PlaceOrderParameters calldata parameters
-    ) external payable checkDeadline(parameters.deadline) returns (uint256 orderId) {
-        GridAddress.GridKey memory gridKey = GridAddress.gridKey(
-            parameters.tokenA,
-            parameters.tokenB,
-            parameters.resolution
+        // compute grid address
+        address gridAddress = GridAddress.computeAddress(
+            makerOrderManager.gridFactory(),
+            GridAddress.gridKey(WETH9, USDC, RESOLUTION)
         );
-        address grid = GridAddress.computeAddress(gridFactory, gridKey);
+        IGrid grid = IGrid(gridAddress);
 
-        orderId = _placeMakerOrder(
-            grid,
-            gridKey,
-            parameters.recipient == address(0) ? msg.sender : parameters.recipient,
-            parameters.zero,
-            parameters.boundaryLower,
-            parameters.amount
+        (, int24 boundary, , ) = grid.slot0();
+        // for this example, we will place a maker order at the current lower boundary of the grid
+        int24 boundaryLower = BoundaryMath.getBoundaryLowerAtBoundary(boundary, RESOLUTION);
+        IMakerOrderManager.PlaceOrderParameters memory parameters = IMakerOrderManager.PlaceOrderParameters({
+            deadline: block.timestamp,
+            recipient: address(this),
+            tokenA: WETH9,
+            tokenB: USDC,
+            resolution: RESOLUTION,
+            zero: grid.token0() == WETH9, // token0 is WETH9 or not
+            boundaryLower: boundaryLower,
+            amount: amount
+        });
+
+        orderId = makerOrderManager.placeMakerOrder(parameters);
+    }
+
+    /// @notice place a maker order for USDC
+    /// @param amount The amount of USDC to place a maker order
+    /// @return orderId The id of the maker order
+    function placeMakerOrderForUSDC(uint128 amount) external returns (uint256 orderId) {
+        // msg.sender MUST approve the contract to spend the input token
+        // transfer the specified amount of USDC to this contract
+        SafeERC20.safeTransferFrom(IERC20(USDC), msg.sender, address(this), amount);
+
+        // approve the maker order manager to spend USDC
+        SafeERC20.safeApprove(IERC20(USDC), address(makerOrderManager), amount);
+
+        // compute grid address
+        address gridAddress = GridAddress.computeAddress(
+            makerOrderManager.gridFactory(),
+            GridAddress.gridKey(WETH9, USDC, RESOLUTION)
         );
+        IGrid grid = IGrid(gridAddress);
+
+        (, int24 boundary, , ) = grid.slot0();
+        // for this example, we will place a maker order at the current lower boundary of the grid
+        int24 boundaryLower = BoundaryMath.getBoundaryLowerAtBoundary(boundary, RESOLUTION);
+        IMakerOrderManager.PlaceOrderParameters memory parameters = IMakerOrderManager.PlaceOrderParameters({
+            deadline: block.timestamp,
+            recipient: address(this),
+            tokenA: WETH9,
+            tokenB: USDC,
+            resolution: RESOLUTION,
+            zero: grid.token0() == USDC, // token0 is USDC or not
+            boundaryLower: boundaryLower,
+            amount: amount
+        });
+
+        orderId = makerOrderManager.placeMakerOrder(parameters);
     }
 
-    struct PlaceOrderInBatchParameters {
-        uint256 deadline;
-        address recipient;
-        address tokenA;
-        address tokenB;
-        int24 resolution;
-        bool zero;
-        IGridParameters.BoundaryLowerWithAmountParameters[] orders;
-    }
-
-    /// @notice Places a batch of maker orders
-    /// @return orderIds An array of order ids representing the placed orders
-    function placeMakerOrderInBatch(
-        PlaceOrderInBatchParameters calldata parameters
-    ) external payable checkDeadline(parameters.deadline) returns (uint256[] memory orderIds) {
-        GridAddress.GridKey memory gridKey = GridAddress.gridKey(
-            parameters.tokenA,
-            parameters.tokenB,
-            parameters.resolution
+    /// @notice settle and collect the maker order
+    function settleAndCollect(uint256 orderId) external returns (uint128 amount0, uint128 amount1) {
+        // compute grid address
+        address gridAddress = GridAddress.computeAddress(
+            makerOrderManager.gridFactory(),
+            GridAddress.gridKey(WETH9, USDC, RESOLUTION)
         );
-        address grid = GridAddress.computeAddress(gridFactory, gridKey);
 
-        orderIds = IGrid(grid).placeMakerOrderInBatch(
-            IGridParameters.PlaceOrderInBatchParameters({
-                recipient: parameters.recipient == address(0) ? msg.sender : parameters.recipient,
-                zero: parameters.zero,
-                orders: parameters.orders
-            }),
-            abi.encode(PlaceMakerOrderCalldata({gridKey: gridKey, payer: msg.sender}))
-        );
-    }
-
-    function _placeMakerOrder(
-        address grid,
-        GridAddress.GridKey memory gridKey,
-        address recipient,
-        bool zero,
-        int24 boundaryLower,
-        uint128 amount
-    ) private returns (uint256 orderId) {
-        orderId = IGrid(grid).placeMakerOrder(
-            IGridParameters.PlaceOrderParameters({
-                recipient: recipient,
-                zero: zero,
-                boundaryLower: boundaryLower,
-                amount: amount
-            }),
-            abi.encode(PlaceMakerOrderCalldata({gridKey: gridKey, payer: msg.sender}))
-        );
-    }
-
-    /// @dev Returns the grid for the given token pair and resolution. The grid contract may or may not exist.
-    function getGrid(address tokenA, address tokenB, int24 resolution) private view returns (IGrid) {
-        return IGrid(GridAddress.computeAddress(gridFactory, GridAddress.gridKey(tokenA, tokenB, resolution)));
-    }
-
-    /// @dev Pays the token to the recipient
-    /// @param token The token to pay
-    /// @param payer The address of the payment token
-    /// @param recipient The address that will receive the payment
-    /// @param amount The amount to pay
-    function pay(address token, address payer, address recipient, uint256 amount) private {
-        if (token == weth9 && address(this).balance >= amount) {
-            // pay with WETH9
-            Address.sendValue(payable(weth9), amount);
-            IWETHMinimum(weth9).transfer(recipient, amount);
-        } else if (payer == address(this)) SafeERC20.safeTransfer(IERC20(token), recipient, amount);
-        else SafeERC20.safeTransferFrom(IERC20(token), payer, recipient, amount);
+        (amount0, amount1) = IGrid(gridAddress).settleMakerOrderAndCollect(msg.sender, orderId, true);
     }
 }
