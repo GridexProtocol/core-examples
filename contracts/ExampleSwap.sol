@@ -60,7 +60,7 @@ contract ExampleSwap {
     function exactOutputSingle(uint256 amountOut, uint256 amountInMaximum) external returns (uint256 amountIn) {
         // msg.sender MUST approve the contract to spend the input token
         // transfer the specified amount of WETH9 to this contract
-        SafeERC20.safeTransferFrom(IERC20(WETH9), msg.sender, address(this), amountIn);
+        SafeERC20.safeTransferFrom(IERC20(WETH9), msg.sender, address(this), amountInMaximum);
 
         // 5 is the resolution of the grid, which fee is 0.05%
         int24 resolution = 5;
@@ -130,7 +130,7 @@ contract ExampleSwap {
     function exactOutput(uint256 amountOut, uint256 amountInMaximum) external returns (uint256 amountIn) {
         // msg.sender MUST approve the contract to spend the input token
         // transfer the specified amount of WETH9 to this contract
-        SafeERC20.safeTransferFrom(IERC20(WETH9), msg.sender, address(this), amountIn);
+        SafeERC20.safeTransferFrom(IERC20(WETH9), msg.sender, address(this), amountInMaximum);
 
         // 5 is the resolution of the grid, which fee is 0.05%
         int24 resolution = 5;
