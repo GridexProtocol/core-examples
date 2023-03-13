@@ -6,81 +6,42 @@ Example projects that demonstrate how to interact with the core smart contracts.
 
 ### [ExampleMakerOrder](./contracts/ExampleMakerOrder.sol)
 
-#### Place a maker order
+#### Place a maker order for `WETH9`
 
 ```solidity
-struct PlaceOrderParameters {
-    uint256 deadline;
-    address recipient;
-    address tokenA;
-    address tokenB;
-    int24 resolution;
-    bool zero;
-    int24 boundaryLower;
-    uint128 amount;
-}
-
-function placeMakerOrder(
-    PlaceOrderParameters calldata parameters
-) external payable returns (uint256 orderId);
+function placeMakerOrderForWETH9(uint128 amount) external returns (uint256 orderId);
 ```
 
-#### Place a batch of maker orders
+#### Place a maker order for `USDC`
 
 ```solidity
-struct PlaceOrderInBatchParameters {
-    uint256 deadline;
-    address recipient;
-    address tokenA;
-    address tokenB;
-    int24 resolution;
-    bool zero;
-    IGridParameters.BoundaryLowerWithAmountParameters[] orders;
-}
-
-function placeMakerOrderInBatch(
-    PlaceOrderInBatchParameters calldata parameters
-) external payable returns (uint256[] memory orderIds);
+function placeMakerOrderForUSDC(uint128 amount) external returns (uint256 orderId);
 ```
 
 ### [ExampleSwap](./contracts/ExampleSwap.sol)
 
-#### Swap `amountIn` of one token for as much as possible of another token
+#### *Single-Hop*-Swaps a specified amount of `USDC` for as much as possible of `WETH9`
 
 ```solidity
-struct ExactInputSingleParameters {
-    address tokenIn;
-    address tokenOut;
-    int24 resolution;
-    address recipient;
-    uint256 deadline;
-    uint256 amountIn;
-    uint256 amountOutMinimum;
-    uint160 priceLimitX96;
-}
-
-function exactInputSingle(
-    ExactInputSingleParameters calldata parameters
-) external payable returns (uint256 amountOut);
+function exactInputSingle(uint256 amountIn, uint256 amountOutMinimum) external returns (uint256 amountOut);
 ```
 
-### Swaps as little as possible of one token for `amountOut` of another token
+#### *Single-Hop*-Swaps as little as possible of `WETH9` for a specified amount of `USDC`
 
 ```solidity
-struct ExactOutputSingleParameters {
-    address tokenIn;
-    address tokenOut;
-    int24 resolution;
-    address recipient;
-    uint256 deadline;
-    uint256 amountOut;
-    uint256 amountInMaximum;
-    uint160 priceLimitX96;
-}
+function exactOutputSingle(uint256 amountOut, uint256 amountInMaximum) external returns (uint256 amountIn);
+```
 
-function exactOutputSingle(
-    ExactOutputSingleParameters calldata parameters
-) external payable returns (uint256 amountIn);
+#### *Multi-Hop*-Swaps a specified amount of `USDC` for as much as possible of `WETH9`
+
+```solidity
+function exactInput(uint256 amountIn, uint256 amountOutMinimum) external returns (uint256 amountOut);
+```
+
+#### *Multi-Hop*-Swaps as little as possible of `WETH9` for a specified amount of `USDC`
+
+```solidity
+function exactOutput(uint256 amountOut, uint256 amountInMaximum) external returns (uint256 amountIn);
 ```
 
 ## Installation
