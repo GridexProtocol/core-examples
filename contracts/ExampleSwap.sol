@@ -103,8 +103,8 @@ contract ExampleSwap {
         // 5 is the resolution of the grid, which fee is 0.05%
         int24 resolution = 5;
 
-        // 0 is a fixed value that refers to the Gridex Protocol
-        uint8 protocolGridex = 0;
+        // 1 is a fixed value that refers to the Gridex Protocol
+        uint8 protocolGridex = 1;
 
         // approve the router to spend USDC
         SafeERC20.safeApprove(IERC20(USDC), address(router), amountIn);
@@ -135,8 +135,8 @@ contract ExampleSwap {
         // 5 is the resolution of the grid, which fee is 0.05%
         int24 resolution = 5;
 
-        // 0 is a fixed value that refers to the Gridex Protocol
-        uint8 protocolGridex = 0;
+        // 1 is a fixed value that refers to the Gridex Protocol
+        uint8 protocolGridex = 1;
 
         // approve the router to spend WETH9
         SafeERC20.safeApprove(IERC20(WETH9), address(router), amountInMaximum);
