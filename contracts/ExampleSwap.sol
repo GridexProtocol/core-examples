@@ -112,7 +112,7 @@ contract ExampleSwap {
         // the call to exactInput executes the swap
         amountOut = router.exactInput(
             ISwapRouter.ExactInputParameters({
-                path: abi.encode(USDC, protocolGridex, resolution, USDT, protocolGridex, resolution, WETH9),
+                path: abi.encodePacked(USDC, protocolGridex, resolution, USDT, protocolGridex, resolution, WETH9),
                 recipient: msg.sender,
                 deadline: block.timestamp,
                 amountIn: amountIn,
@@ -144,7 +144,7 @@ contract ExampleSwap {
         // the call to exactOutput executes the swap
         amountIn = router.exactOutput(
             ISwapRouter.ExactOutputParameters({
-                path: abi.encode(USDC, protocolGridex, resolution, USDT, protocolGridex, resolution, WETH9),
+                path: abi.encodePacked(USDC, protocolGridex, resolution, USDT, protocolGridex, resolution, WETH9),
                 recipient: msg.sender,
                 deadline: block.timestamp,
                 amountOut: amountOut,
