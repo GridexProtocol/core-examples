@@ -50,7 +50,7 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "@gridexprotocol/core": "^1.0.2",
+    "@gridexprotocol/core": "^1.0.3",
     "@openzeppelin/contracts": "^4.7.3"
   }
 }
