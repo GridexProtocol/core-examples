@@ -28,19 +28,19 @@ contract ExampleSwap {
     function exactInputSingle(uint256 amountIn, uint256 amountOutMinimum) external returns (uint256 amountOut) {
         // msg.sender MUST approve the contract to spend the input token
         // transfer the specified amount of USDC to this contract
-        SafeERC20.safeTransferFrom(IERC20(USDC), msg.sender, address(this), amountIn);
+        SafeERC20.safeTransferFrom(IERC20(WETH9), msg.sender, address(this), amountIn);
 
         // 5 is the resolution of the grid, which fee is 0.05%
         int24 resolution = 5;
 
         // approve the router to spend USDC
-        SafeERC20.safeApprove(IERC20(USDC), address(router), amountIn);
+        SafeERC20.safeApprove(IERC20(WETH9), address(router), amountIn);
 
         // the call to exactInputSingle executes the swap
         amountOut = router.exactInputSingle(
             ISwapRouter.ExactInputSingleParameters({
-                tokenIn: USDC,
-                tokenOut: WETH9,
+                tokenIn: WETH9,
+                tokenOut: USDC,
                 resolution: resolution,
                 recipient: msg.sender,
                 deadline: block.timestamp,
