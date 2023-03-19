@@ -18,8 +18,16 @@ task("balance", "check balance").setAction(async ({amount}, hre) => {
     console.log("Updated balance: ", balance);
 });
 
+task("balanceUSDC", "check balance").setAction(async (taskArgs, hre) => {
+    const balanceEth = await hre.ethers.getContractAt("IERC20", USDC);
+    const accounts = await hre.ethers.getSigners();
+    const balance = await balanceEth.balanceOf(accounts[0].address);
+    console.log("Updated balance: ", balance);
+});
+
 task("fundUSDC", "Funds account with USDC").setAction(async (taskArgs, hre) => {
-    await helpers.impersonateAccount("0x62383739d68dd0f844103db8dfb05a7eded5bbe6");
+    await hre.run("swap");
+    await hre.run("balanceUSDC");
 });
 
 task("fundWETH", "Funds account with WETH")
@@ -34,14 +42,19 @@ task("fundWETH", "Funds account with WETH")
         console.log("Updated balance: ", balance.toNumber());
     });
 
-task("swap", "Swap").setAction(async ({amount}, hre) => {
+task("swap", "Swap").setAction(async (taskArgs, hre) => {
+    const amount = 1000000000000;
+    hre.run("fundWETH", {amount: amount});
+
     const exampleSwap = await hre.ethers.getContractAt("ExampleSwap", "0x720472c8ce72c2A2D711333e064ABD3E6BbEAdd3");
 
     const wETH = await hre.ethers.getContractAt("IERC20", WETH);
 
-    await wETH.approve(exampleSwap.address, 100);
+    await wETH.approve(exampleSwap.address, amount);
 
-    await exampleSwap.exactInputSingle(100, 1);
+    await exampleSwap.exactInputSingle(amount, 1);
+
+    await hre.run("balanceUSDC");
 });
 
 const config: HardhatUserConfig = {
